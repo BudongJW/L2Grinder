@@ -22,9 +22,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore Client/Client.csproj -p:SolutionDir=${{ github.workspace }}/
-
       - name: Publish
         run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false -p:SolutionDir=${{ github.workspace }}/
 
