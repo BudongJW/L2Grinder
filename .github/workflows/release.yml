@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 jobs:
   release:
     runs-on: windows-latest
@@ -13,16 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Client/Client.csproj
+        env:
+          DOTNET_ROLL_FORWARD: Disable
 
       - name: Publish
         run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false
+        env:
+          DOTNET_ROLL_FORWARD: Disable
 
       - name: Create ZIP
         run: Compress-Archive -Path ./publish/* -DestinationPath L2Grinder-${{ github.ref_name }}.zip

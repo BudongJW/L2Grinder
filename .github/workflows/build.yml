@@ -6,22 +6,30 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 6.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Client/Client.csproj
+        env:
+          DOTNET_ROLL_FORWARD: Disable
 
       - name: Build
         run: dotnet build Client/Client.csproj --configuration Release --no-restore
+        env:
+          DOTNET_ROLL_FORWARD: Disable
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
