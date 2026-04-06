@@ -23,10 +23,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore Client/Client.csproj
+        run: dotnet restore Client/Client.csproj -p:SolutionDir=${{ github.workspace }}/
 
       - name: Publish
-        run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false
+        run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false -p:SolutionDir=${{ github.workspace }}/
 
       - name: Create ZIP
         run: Compress-Archive -Path ./publish/* -DestinationPath L2Grinder-${{ github.ref_name }}.zip

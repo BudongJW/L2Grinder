@@ -22,13 +22,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore Client/Client.csproj --verbosity detailed
+        run: dotnet restore Client/Client.csproj -p:SolutionDir=${{ github.workspace }}/
 
       - name: Build
-        run: dotnet build Client/Client.csproj --configuration Release --no-restore
+        run: dotnet build Client/Client.csproj --configuration Release --no-restore -p:SolutionDir=${{ github.workspace }}/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: L2Grinder-Client
-          path: Client/bin/Release/net8.0-windows/
+          path: Release/bin/
