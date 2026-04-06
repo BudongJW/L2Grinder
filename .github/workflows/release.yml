@@ -17,20 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET 6.0
+      - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Client/Client.csproj
-        env:
-          DOTNET_ROLL_FORWARD: Disable
 
       - name: Publish
         run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false
-        env:
-          DOTNET_ROLL_FORWARD: Disable
 
       - name: Create ZIP
         run: Compress-Archive -Path ./publish/* -DestinationPath L2Grinder-${{ github.ref_name }}.zip
@@ -44,7 +40,7 @@ jobs:
             ## L2Grinder ${{ github.ref_name }}
 
             ### Requirements
-            - .NET 6.0 Runtime (Windows)
+            - .NET 8.0 Runtime (Windows)
             - Lineage 2 Interlude client
             - L2jGeodataPathFinder.dll
             - Geodata files

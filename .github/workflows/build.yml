@@ -16,23 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET 6.0
+      - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Client/Client.csproj
-        env:
-          DOTNET_ROLL_FORWARD: Disable
 
       - name: Build
         run: dotnet build Client/Client.csproj --configuration Release --no-restore
-        env:
-          DOTNET_ROLL_FORWARD: Disable
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: L2Grinder-Client
-          path: Client/bin/Release/net6.0-windows/
+          path: Client/bin/Release/net8.0-windows/
