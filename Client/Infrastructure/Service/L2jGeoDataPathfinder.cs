@@ -82,8 +82,6 @@ namespace Client.Infrastructure.Service
 
         private Vector3 NodeToVector(PathNode node)
         {
-            var rnd = new Random();
-
             return new Vector3(
                 rnd.Next((int)node.minX, (int)node.maxX + 1),
                 rnd.Next((int)node.minY, (int)node.maxY + 1),
@@ -96,6 +94,7 @@ namespace Client.Infrastructure.Service
             return System.IO.Directory.GetCurrentDirectory() + "/Assets/" + geodataDirectory + "/";
         }
 
+        private static readonly Random rnd = Random.Shared;
         private readonly string geodataDirectory;
         private const ushort LINE_OF_SIGHT_HEIGHT_OF_OBSTACLE = 999;
     }

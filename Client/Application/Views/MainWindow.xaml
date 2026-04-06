@@ -32,6 +32,7 @@
             <RowDefinition Height="22"></RowDefinition>
             <RowDefinition></RowDefinition>
             <RowDefinition Height="240"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
             <MenuItem Header="AI options">
@@ -73,13 +74,16 @@
                 <MenuItem Header="Config" Click="AIConfig_Click"/>
             </MenuItem>
         </Menu>
-        <ListBox x:Name="listBox" Grid.Row="2" Grid.Column="0" ItemsSource="{Binding ChatMessages, Mode=OneWay}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Path=Text, Mode=OneWay}" Foreground="{Binding Path=Color, Mode=OneWay}" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <DockPanel Grid.Row="2" Grid.Column="0">
+            <TextBlock DockPanel.Dock="Top" FontWeight="Bold" Padding="4,2" Background="#EEEEEE">Chat</TextBlock>
+            <ListBox x:Name="listBox" ItemsSource="{Binding ChatMessages, Mode=OneWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Path=Text, Mode=OneWay}" Foreground="{Binding Path=Color, Mode=OneWay}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
         <components:Map Grid.Column="0" Grid.Row="1" DataContext="{Binding Map}" />
         <TabControl Grid.Row="1" Grid.Column="1">
             <TabItem>
@@ -196,6 +200,18 @@
                     </TabControl>
                 </TabItem.Content>
             </TabItem>
+            <TabItem>
+                <TabItem.Header>Log</TabItem.Header>
+                <TabItem.Content>
+                    <ListBox x:Name="activityLogList" ItemsSource="{Binding ActivityLog, Mode=OneWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </TabItem.Content>
+            </TabItem>
         </TabControl>
         <Grid Grid.Row="2" Grid.Column="1" DataContext="{Binding Hero, Mode=OneWay}" Margin="4" Visibility="{Binding Path=.,Converter={StaticResource NullToVisibilityConverter}}">
             <Grid.ColumnDefinitions>
@@ -306,5 +322,42 @@
                 </StackPanel>
             </DockPanel>
         </Grid>
+        <StatusBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding ConnectionStateText}"/>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Move: " FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding MovementStateText}"/>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="AI: " FontWeight="SemiBold"/>
+                    <TextBlock>
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Disabled"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AIStatus}" Value="True">
+                                        <Setter Property="Text" Value="{Binding AIType, StringFormat='{}{0} Active'}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding LastNotification}" Foreground="OrangeRed" MaxWidth="400" TextTrimming="CharacterEllipsis"/>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

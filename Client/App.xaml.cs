@@ -37,6 +37,16 @@ namespace Client
 
         public App()
         {
+            DispatcherUnhandledException += (s, e) =>
+            {
+                MessageBox.Show(
+                    $"Unhandled error:\n\n{e.Exception.Message}\n\n{e.Exception.StackTrace}",
+                    "L2Bot 2.0 - Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                e.Handled = true;
+            };
+
             AppHost = Host.CreateDefaultBuilder()
                 .ConfigureServices(
                     (hostContext, services) => ConfigureServices(services)
@@ -46,15 +56,27 @@ namespace Client
 
         protected override async void OnStartup(StartupEventArgs e)
         {
-            await AppHost!.StartAsync();
+            try
+            {
+                await AppHost!.StartAsync();
 
-            var startupForm = AppHost.Services.GetRequiredService<MainWindow>();
-            startupForm.Show();
+                var startupForm = AppHost.Services.GetRequiredService<MainWindow>();
+                startupForm.Show();
 
-            base.OnStartup(e);
+                base.OnStartup(e);
 
-            var application = AppHost.Services.GetRequiredService<Bot>();
-            await application.StartAsync();
+                var application = AppHost.Services.GetRequiredService<Bot>();
+                await application.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to start application:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                    "L2Bot 2.0 - Startup Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(1);
+            }
         }
 
         protected override async void OnExit(ExitEventArgs e)

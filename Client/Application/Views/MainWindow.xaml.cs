@@ -15,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Collections.Specialized;
 using System.Windows.Shapes;
 
 namespace Client.Application.Views
@@ -36,6 +37,20 @@ namespace Client.Application.Views
             this.mainViewModel = mainViewModel;
             this.aiConfigViewModel = aiConfigViewModel;
             aiConfigView = new AIConfig(aiConfigViewModel);
+
+            mainViewModel.ChatMessages.CollectionChanged += AutoScrollList(listBox);
+            mainViewModel.ActivityLog.CollectionChanged += AutoScrollList(activityLogList);
+        }
+
+        private static NotifyCollectionChangedEventHandler AutoScrollList(ListBox list)
+        {
+            return (s, e) =>
+            {
+                if (list.Items.Count > 0)
+                {
+                    list.ScrollIntoView(list.Items[list.Items.Count - 1]);
+                }
+            };
         }
 
         private void AIConfig_Click(object sender, RoutedEventArgs e)

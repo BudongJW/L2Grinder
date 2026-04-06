@@ -1,4 +1,5 @@
 ﻿using Client.Domain.DTO;
+using Client.Domain.Enums;
 using Client.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -17,5 +18,7 @@ namespace Client.Domain.Service
         public Task<bool> MoveAsync(Vector3 location);
         public bool IsLocked { get; }
         public void Unlock();
+        public MovementState State { get; }
+        public event Action<MovementState>? StateChanged;
     }
 }

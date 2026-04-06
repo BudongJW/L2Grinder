@@ -23,6 +23,10 @@ namespace Client
         [DllImport("kernel32.dll", EntryPoint = "LoadLibrary", SetLastError = true)]
         static extern int LoadLibrary([MarshalAs(UnmanagedType.LPStr)] string lpLibFileName);
 
+        private const int MaxReconnectAttempts = 10;
+        private const int InitialReconnectDelayMs = 1000;
+        private const int MaxReconnectDelayMs = 30000;
+
         private readonly TransportInterface transport;
         private readonly MessageParserInterface messageParser;
         private readonly EntityHandlerFactoryInterface entityHandlerFactory;
@@ -30,6 +34,8 @@ namespace Client
         private readonly IServiceProvider serviceProvider;
         private readonly string dllName;
         private readonly AIInterface ai;
+
+        public event Action<string>? Error;
 
         public Bot(
             IServiceProvider serviceProvider,
@@ -68,10 +74,41 @@ namespace Client
                     await ai.Update();
                 }
             });
+
+            int reconnectAttempts = 0;
             while (true)
             {
                 await transport.ReceiveAsync();
-                await transport.ConnectAsync();
+
+                if (!transport.IsConnected())
+                {
+                    if (reconnectAttempts >= MaxReconnectAttempts)
+                    {
+                        var msg = $"Failed to reconnect after {MaxReconnectAttempts} attempts. Giving up.";
+                        Debug.WriteLine(msg);
+                        Error?.Invoke(msg);
+                        break;
+                    }
+
+                    int delay = Math.Min(InitialReconnectDelayMs * (int)Math.Pow(2, reconnectAttempts), MaxReconnectDelayMs);
+                    Debug.WriteLine($"Disconnected. Reconnecting in {delay}ms (attempt {reconnectAttempts + 1}/{MaxReconnectAttempts})...");
+                    Error?.Invoke($"Disconnected. Reconnecting in {delay}ms (attempt {reconnectAttempts + 1}/{MaxReconnectAttempts})...");
+
+                    await Task.Delay(delay);
+                    reconnectAttempts++;
+
+                    try
+                    {
+                        await transport.ConnectAsync();
+                        await transport.SendAsync("invalidate");
+                        reconnectAttempts = 0;
+                        Debug.WriteLine("Reconnected successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Reconnection failed: {ex.Message}");
+                    }
+                }
             }
         }
 
@@ -89,6 +126,7 @@ namespace Client
             eventBus.Subscrbe((EventHandlerInterface<SkillDeletedEvent>)viewModel);
             eventBus.Subscrbe((EventHandlerInterface<ItemCreatedEvent>)viewModel);
             eventBus.Subscrbe((EventHandlerInterface<ItemDeletedEvent>)viewModel);
+            eventBus.Subscrbe((EventHandlerInterface<NotificationEvent>)viewModel);
 
             var worldHandler = serviceProvider.GetRequiredService<WorldHandler>();
             eventBus.Subscrbe((EventHandlerInterface<HeroCreatedEvent>)worldHandler);
@@ -124,11 +162,13 @@ namespace Client
                 catch (Exception ex)
                 {
                     Debug.WriteLine("Exception: " + ex.Message);
+                    Error?.Invoke($"Handler error: {ex.Message}");
                 }
             }
             catch (Domain.Exception.ParserException)
             {
                 Debug.WriteLine("Unable to parse message: " + args);
+                Error?.Invoke($"Unable to parse message: {args.Substring(0, Math.Min(args.Length, 100))}");
             }
         }
     }

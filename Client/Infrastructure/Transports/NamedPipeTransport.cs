@@ -14,6 +14,8 @@ namespace Client.Infrastructure.Transports
     public class NamedPipeTransport : Domain.Transports.TransportInterface, IDisposable
     {
         public event DelegateMessage? Message;
+        public event Action? Connected;
+        public event Action? Disconnected;
 
         public async Task ConnectAsync()
         {
@@ -42,6 +44,7 @@ namespace Client.Infrastructure.Transports
                 await mainPipe.ConnectAsync();
                 mainPipe.ReadMode = PipeTransmissionMode.Message;
                 Debug.WriteLine("Connected to main pipe\n");
+                Connected?.Invoke();
             }
         }
         public async Task ReceiveAsync()
@@ -55,6 +58,12 @@ namespace Client.Infrastructure.Transports
                 {
                     string text = Encoding.Unicode.GetString(buffer).TrimEnd('\0');
                     Message?.Invoke(text);
+                }
+                else
+                {
+                    Debug.WriteLine("Pipe closed (readBytes == 0)");
+                    Disconnect();
+                    Disconnected?.Invoke();
                 }
             }
         }

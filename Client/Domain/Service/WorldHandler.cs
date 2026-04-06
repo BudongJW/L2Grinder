@@ -4,6 +4,7 @@ using Client.Domain.Parsers;
 using Client.Domain.ValueObjects;
 using Client.Domain.DTO;
 using Client.Domain.Enums;
+using static Client.Domain.Enums.NotificationLevel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -50,12 +51,12 @@ namespace Client.Domain.Service
 
             if (hero.TargetId == id)
             {
-                Debug.WriteLine("RequestAcquireTarget: creature " + id + " is already target");
+                Notify("RequestAcquireTarget: creature " + id + " is already target");
                 return;
             }
             if (!creatures.ContainsKey(id) && hero.Id != id)
             {
-                Debug.WriteLine("RequestAcquireTarget: creature " + id + " not found");
+                Notify("RequestAcquireTarget: creature " + id + " not found");
                 return;
             }
 
@@ -71,7 +72,7 @@ namespace Client.Domain.Service
 
             if (!creatures.ContainsKey(id))
             {
-                Debug.WriteLine("RequestAttackOrFollow: creature " + id + " not found");
+                Notify("RequestAttackOrFollow: creature " + id + " not found");
                 return;
             }
 
@@ -87,7 +88,7 @@ namespace Client.Domain.Service
 
             if (!drops.ContainsKey(id))
             {
-                Debug.WriteLine("RequestPickUp: drop " + id + " not found");
+                Notify("RequestPickUp: drop " + id + " not found");
                 return;
             }
 
@@ -103,13 +104,13 @@ namespace Client.Domain.Service
 
             if (!skills.TryGetValue(id, out Skill? skill))
             {
-                Debug.WriteLine("RequestUseSkill: skill " + id + " not found");
+                Notify("RequestUseSkill: skill " + id + " not found");
                 return;
             }
 
             if (!skill.IsActive)
             {
-                Debug.WriteLine("RequestUseSkill: skill " + id + " is passive");
+                Notify("RequestUseSkill: skill " + id + " is passive");
                 return;
             }
 
@@ -132,7 +133,7 @@ namespace Client.Domain.Service
 
             if (!items.ContainsKey(id))
             {
-                Debug.WriteLine("RequestUseItem: item " + id + " not found");
+                Notify("RequestUseItem: item " + id + " not found");
                 return;
             }
 
@@ -148,7 +149,7 @@ namespace Client.Domain.Service
 
             if (!items.ContainsKey(id))
             {
-                Debug.WriteLine("RequestToggleAutouseSoulshot: item " + id + " not found");
+                Notify("RequestToggleAutouseSoulshot: item " + id + " not found");
                 return;
             }
 
@@ -164,7 +165,7 @@ namespace Client.Domain.Service
 
             if (!hero.IsStanding)
             {
-                Debug.WriteLine("RequestSit: hero is already sitting");
+                Notify("RequestSit: hero is already sitting");
                 return;
             }
 
@@ -180,7 +181,7 @@ namespace Client.Domain.Service
 
             if (hero.IsStanding)
             {
-                Debug.WriteLine("RequestStand: hero is already standing");
+                Notify("RequestStand: hero is already standing");
                 return;
             }
 
@@ -324,6 +325,12 @@ namespace Client.Domain.Service
             SendMessage<uint>(type);
         }
 
+        private void Notify(string message, NotificationLevel level = NotificationLevel.Warning)
+        {
+            Debug.WriteLine(message);
+            eventBus.Publish(new NotificationEvent(message, level));
+        }
+
         #region Handle Entity
         public void Handle(HeroCreatedEvent @event)
         {
@@ -388,12 +395,13 @@ namespace Client.Domain.Service
         }
         #endregion
 
-        public WorldHandler(OutgoingMessageBuilderInterface outgoingMessageBuilder, TransportInterface transport, ItemInfoHelperInterface itemInfoHelper, NpcInfoHelperInterface npcInfoHelper)
+        public WorldHandler(OutgoingMessageBuilderInterface outgoingMessageBuilder, TransportInterface transport, ItemInfoHelperInterface itemInfoHelper, NpcInfoHelperInterface npcInfoHelper, EventBusInterface eventBus)
         {
             this.outgoingMessageBuilder = outgoingMessageBuilder;
             this.transport = transport;
             this.itemInfoHelper = itemInfoHelper;
             this.npcInfoHelper = npcInfoHelper;
+            this.eventBus = eventBus;
         }
 
         private Hero? hero;
@@ -405,5 +413,6 @@ namespace Client.Domain.Service
         private readonly TransportInterface transport;
         private ItemInfoHelperInterface itemInfoHelper;
         private readonly NpcInfoHelperInterface npcInfoHelper;
+        private readonly EventBusInterface eventBus;
     }
 }

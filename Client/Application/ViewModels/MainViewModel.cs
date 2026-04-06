@@ -19,6 +19,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
+using Client.Domain.Enums;
+using Client.Domain.Transports;
 
 namespace Client.Application.ViewModels
 {
@@ -34,7 +37,8 @@ namespace Client.Application.ViewModels
         EventHandlerInterface<SkillCreatedEvent>,
         EventHandlerInterface<SkillDeletedEvent>,
         EventHandlerInterface<ItemCreatedEvent>,
-        EventHandlerInterface<ItemDeletedEvent>
+        EventHandlerInterface<ItemDeletedEvent>,
+        EventHandlerInterface<NotificationEvent>
     {
 
         public void Handle(HeroCreatedEvent @event)
@@ -154,6 +158,18 @@ namespace Client.Application.ViewModels
             QuestItems.RemoveAll(x => x.Id == @event.Id);
         }
 
+        public void Handle(NotificationEvent @event)
+        {
+            var entry = $"[{@event.Timestamp:HH:mm:ss}] [{@event.Level}] {@event.Message}";
+            DispatchUI(() =>
+            {
+                ActivityLog.Add(entry);
+                if (ActivityLog.Count > 500) ActivityLog.RemoveAt(0);
+                LastNotification = @event.Message;
+                OnPropertyChanged(nameof(LastNotification));
+            });
+        }
+
         public Dictionary<TypeEnum, string> AITypes
         {
             get
@@ -196,7 +212,7 @@ namespace Client.Application.ViewModels
             OnPropertyChanged("AIType");
         }
 
-        public MainViewModel(WorldHandler worldHandler, AsyncPathMoverInterface pathMover, AIInterface ai, Config aiConfig)
+        public MainViewModel(WorldHandler worldHandler, AsyncPathMoverInterface pathMover, AIInterface ai, Config aiConfig, TransportInterface transport)
         {
             this.worldHandler = worldHandler;
             this.pathMover = pathMover;
@@ -205,6 +221,27 @@ namespace Client.Application.ViewModels
             Map = new MapViewModel(pathMover);
             ToggleAICommand = new RelayCommand(OnToggleAI);
             ChangeAITypeCommand = new RelayCommand(OnChangeAIType);
+
+            transport.Connected += () => DispatchUI(() =>
+            {
+                ConnectionStateText = "Connected";
+                ConnectionBrush = Brushes.Green;
+                OnPropertyChanged(nameof(ConnectionStateText));
+                OnPropertyChanged(nameof(ConnectionBrush));
+            });
+            transport.Disconnected += () => DispatchUI(() =>
+            {
+                ConnectionStateText = "Disconnected";
+                ConnectionBrush = Brushes.Red;
+                OnPropertyChanged(nameof(ConnectionStateText));
+                OnPropertyChanged(nameof(ConnectionBrush));
+            });
+
+            pathMover.StateChanged += (state) => DispatchUI(() =>
+            {
+                MovementStateText = state.ToString();
+                OnPropertyChanged(nameof(MovementStateText));
+            });
         }
 
         public ICommand ToggleAICommand { get; set; }
@@ -222,10 +259,28 @@ namespace Client.Application.ViewModels
         public bool AIStatus => ai.IsEnabled;
         public TypeEnum AIType => ai.Type;
 
+        public string ConnectionStateText { get; private set; } = "Disconnected";
+        public SolidColorBrush ConnectionBrush { get; private set; } = Brushes.Red;
+        public string MovementStateText { get; private set; } = "Idle";
+        public string LastNotification { get; private set; } = "";
+        public ObservableCollection<string> ActivityLog { get; } = new ObservableCollection<string>();
+
         public Hero? hero;
         private readonly WorldHandler worldHandler;
         private readonly AsyncPathMoverInterface pathMover;
         private readonly AIInterface ai;
         private readonly Config aiConfig;
+
+        private void DispatchUI(Action action)
+        {
+            if (System.Windows.Application.Current?.Dispatcher is Dispatcher dispatcher && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(action);
+            }
+            else
+            {
+                action();
+            }
+        }
     }
 }

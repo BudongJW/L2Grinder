@@ -2,6 +2,7 @@
 using Client.Domain.DTO;
 using Client.Domain.Entities;
 using Client.Domain.Enums;
+using static Client.Domain.Enums.MovementState;
 using Client.Domain.Service;
 using Client.Domain.ValueObjects;
 using System;
@@ -26,14 +27,29 @@ namespace Client.Infrastructure.Service
         private readonly int nextNodeDistanceTolerance;
         private readonly ushort maxPassableHeight;
         private CancellationTokenSource? cancellationTokenSource;
+        private MovementState _state = MovementState.Idle;
 
         public PathfinderInterface Pathfinder => pathfinder;
         public ObservableCollection<PathSegment> Path { get; private set; } = new ObservableCollection<PathSegment>();
         public bool IsLocked { get; private set; } = false;
+        public MovementState State
+        {
+            get => _state;
+            private set
+            {
+                if (_state != value)
+                {
+                    _state = value;
+                    StateChanged?.Invoke(value);
+                }
+            }
+        }
+        public event Action<MovementState>? StateChanged;
 
         public void Unlock()
         {
             IsLocked = false;
+            State = MovementState.Idle;
             if (cancellationTokenSource != null)
             {
                 cancellationTokenSource.Cancel();
@@ -59,10 +75,12 @@ namespace Client.Infrastructure.Service
             {
                 return await Task.Run(async () =>
                 {
+                    State = MovementState.PathFinding;
                     Debug.WriteLine("Find path started");
                     FindPath(location, maxPassableHeight);
                     Debug.WriteLine("Find path finished");
 
+                    State = MovementState.Moving;
 
                     foreach (var node in Path.ToList())
                     {
@@ -71,6 +89,8 @@ namespace Client.Infrastructure.Service
                         var reached = await WaitForNodeReaching(cancellationToken, node);
                         if (!reached)
                         {
+                            State = MovementState.Stuck;
+                            Debug.WriteLine("Path stuck - movement cancelled");
                             IsLocked = false;
                             return false;
                         }
@@ -79,6 +99,7 @@ namespace Client.Infrastructure.Service
                     }
 
                     IsLocked = false;
+                    State = MovementState.Idle;
                     return true;
                 }, cancellationToken);
             }
@@ -86,6 +107,7 @@ namespace Client.Infrastructure.Service
             {
                 Debug.WriteLine("Path cancelled");
                 IsLocked = false;
+                State = MovementState.Idle;
                 return true;
             }
         }
