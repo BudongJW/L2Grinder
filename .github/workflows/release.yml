@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Client/Client.csproj
+
+      - name: Publish
+        run: dotnet publish Client/Client.csproj --configuration Release --output ./publish --self-contained false
+
+      - name: Create ZIP
+        run: Compress-Archive -Path ./publish/* -DestinationPath L2Grinder-${{ github.ref_name }}.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: L2Grinder-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          body: |
+            ## L2Grinder ${{ github.ref_name }}
+
+            ### Requirements
+            - .NET 6.0 Runtime (Windows)
+            - Lineage 2 Interlude client
+            - L2jGeodataPathFinder.dll
+            - Geodata files
+
+            ### Installation
+            1. Download and extract the ZIP
+            2. Place `L2BotDll.dll` and `L2jGeodataPathFinder.dll` in the same folder
+            3. Place geodata files in `Assets/geodata/`
+            4. Edit `config.json` if needed
+            5. Launch L2 client, then run `L2Grinder.exe`

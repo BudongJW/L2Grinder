@@ -6,6 +6,15 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<PlatformTarget>x86</PlatformTarget>
+		<AssemblyName>L2Grinder</AssemblyName>
+		<RootNamespace>Client</RootNamespace>
+		<Version>1.0.0</Version>
+		<Authors>BudongJW</Authors>
+		<Product>L2Grinder</Product>
+		<Description>Automated grinding framework for Lineage 2 Interlude</Description>
+		<RepositoryUrl>https://github.com/BudongJW/L2Grinder</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<ItemGroup>
