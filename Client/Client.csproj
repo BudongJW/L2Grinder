@@ -12,9 +12,6 @@
 		<Authors>BudongJW</Authors>
 		<Product>L2Grinder</Product>
 		<Description>Automated grinding framework for Lineage 2 Interlude</Description>
-		<RepositoryUrl>https://github.com/BudongJW/L2Grinder</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<ItemGroup>
